@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>스마트잇 데일리 트래커</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+<style>
+:root {
+  --green: #1D9E75;
+  --green-light: #E1F5EE;
+  --green-dark: #085041;
+  --text: #1a1a1a;
+  --text-sub: #6b7280;
+  --text-hint: #9ca3af;
+  --bg: #f9fafb;
+  --surface: #ffffff;
+  --border: rgba(0,0,0,0.1);
+  --border-md: rgba(0,0,0,0.15);
+  --danger: #E24B4A;
+  --danger-bg: #FCEBEB;
+  --info: #378ADD;
+  --info-bg: #E6F1FB;
+  --success: #1D9E75;
+  --success-bg: #E1F5EE;
+  --warn: #BA7517;
+  --warn-bg: #FAEEDA;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #f3f4f6;
+    --text-sub: #9ca3af;
+    --text-hint: #6b7280;
+    --bg: #111827;
+    --surface: #1f2937;
+    --border: rgba(255,255,255,0.08);
+    --border-md: rgba(255,255,255,0.15);
+    --green-light: #04342C;
+    --danger-bg: #501313;
+    --info-bg: #042C53;
+    --success-bg: #04342C;
+    --warn-bg: #412402;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* Layout */
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 280px; background: var(--surface); border-right: 0.5px solid var(--border); padding: 24px 20px; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.main { flex: 1; max-width: 640px; padding: 24px; }
+@media (max-width: 768px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; padding: 16px; border-right: none; border-bottom: 0.5px solid var(--border); }
+  .main { padding: 16px; max-width: 100%; }
+}
+
+/* Brand */
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.brand-icon { width: 36px; height: 36px; background: var(--green); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; }
+.brand-name { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+.brand-sub { font-size: 11px; color: var(--text-sub); }
+
+/* User selector */
+.user-selector { background: var(--bg); border-radius: var(--radius-sm); padding: 8px; margin-bottom: 20px; }
+.user-selector-row { display: flex; gap: 6px; align-items: center; }
+.user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--green); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+.user-select-wrap { flex: 1; position: relative; }
+.user-select-wrap select { background: transparent; border: none; padding: 6px 4px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.user-action-btn { width: 32px; height: 32px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-md); background: var(--surface); color: var(--text-sub); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.user-action-btn:hover { background: var(--bg); color: var(--text); }
+.user-action-btn.danger:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
+
+/* Profile form */
+.form-label { font-size: 12px; color: var(--text-sub); margin-bottom: 4px; }
+.form-group { margin-bottom: 12px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+input, select { width: 100%; padding: 8px 10px; border: 0.5px solid var(--border-md); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 14px; outline: none; }
+input:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+.tdee-display { background: var(--green-light); border-radius: var(--radius-sm); padding: 12px; text-align: center; margin-top: 8px; }
+.tdee-display .val { font-size: 28px; font-weight: 600; color: var(--green-dark); }
+.tdee-display .lbl { font-size: 12px; color: var(--success); margin-top: 2px; }
+
+/* Date nav */
+.date-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.date-nav-center { text-align: center; }
+.date-main { font-size: 20px; font-weight: 600; color: var(--text); }
+.date-sub { font-size: 13px; color: var(--text-sub); }
+.nav-btn { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-sub); font-size: 18px; transition: background 0.1s; }
+.nav-btn:hover { background: var(--bg); }
+
+/* Ring */
+.summary-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; display: flex; gap: 24px; align-items: center; }
+.ring-wrap { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+.ring-wrap svg { transform: rotate(-90deg); }
+.ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring-pct { font-size: 24px; font-weight: 600; color: var(--text); }
+.ring-lbl { font-size: 11px; color: var(--text-hint); }
+.stats-grid { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.stat-row { display: flex; justify-content: space-between; align-items: center; }
+.stat-name { font-size: 13px; color: var(--text-sub); }
+.stat-val { font-size: 16px; font-weight: 500; color: var(--text); }
+.stat-unit { font-size: 11px; color: var(--text-hint); }
+.mini-bar { height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; margin-top: 3px; }
+.mini-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+
+/* Meals */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.section-title { font-size: 16px; font-weight: 600; color: var(--text); }
+.meal-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+.meal-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; }
+.meal-header:hover { background: var(--bg); }
+.meal-left { display: flex; align-items: center; gap: 8px; }
+.meal-icon { width: 28px; height: 28px; border-radius: 8px; background: var(--green-light); display: flex; align-items: center; justify-content: center; color: var(--green); font-size: 14px; }
+.meal-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.meal-kcal { font-size: 13px; color: var(--text-sub); }
+.food-item { display: flex; align-items: center; padding: 10px 16px; border-top: 0.5px solid var(--border); }
+.food-name { flex: 1; font-size: 14px; color: var(--text); }
+.food-kcal { font-size: 13px; color: var(--text-sub); margin-right: 10px; }
+.del-btn { background: none; border: none; cursor: pointer; color: var(--text-hint); font-size: 16px; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; }
+.del-btn:hover { background: var(--danger-bg); color: var(--danger); }
+
+/* Add button */
+.add-meal-row { padding: 10px 16px; border-top: 0.5px solid var(--border); display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--green); font-size: 13px; background: none; border-left: none; border-right: none; border-bottom: none; width: 100%; text-align: left; }
+.add-meal-row:hover { background: var(--success-bg); }
+
+/* Empty */
+.empty-day { text-align: center; padding: 48px 16px; color: var(--text-hint); }
+.empty-day i { font-size: 40px; display: block; margin-bottom: 12px; color: var(--border-md); }
+
+/* Bottom sheet / Modal */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: flex-end; justify-content: center; }
+.overlay.open { display: flex; }
+@media (min-width: 769px) {
+  .overlay { align-items: center; }
+  .sheet { border-radius: var(--radius); max-width: 460px; width: 100%; }
+}
+.sheet { background: var(--surface); border-radius: 20px 20px 0 0; padding: 20px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border-md); margin: 0 auto 20px; }
+@media (min-width: 769px) { .sheet-handle { display: none; } }
+.sheet-title { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 20px; }
+.seg-ctrl { display: flex; border: 0.5px solid var(--border-md); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 16px; }
+.seg-btn { flex: 1; padding: 9px 4px; font-size: 13px; background: none; border: none; cursor: pointer; color: var(--text-sub); }
+.seg-btn.active { background: var(--green); color: white; font-weight: 500; }
+.sheet-label { font-size: 12px; color: var(--text-sub); margin-bottom: 6px; }
+.divider { display: flex; align-items: center; gap: 8px; margin: 16px 0; }
+.divider-line { flex: 1; height: 0.5px; background: var(--border); }
+.divider-text { font-size: 12px; color: var(--text-hint); }
+.btn-primary { width: 100%; padding: 12px; background: var(--green); color: white; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 8px; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-ghost { width: 100%; padding: 10px; background: none; color: var(--text-sub); border: 0.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; cursor: pointer; margin-top: 8px; }
+.btn-ghost:hover { background: var(--bg); }
+.cand-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.cand-card { border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px; cursor: pointer; transition: border-color 0.15s; }
+.cand-card:hover { border-color: var(--green); }
+.cand-card.sel { border: 2px solid var(--green); background: var(--success-bg); }
+.cand-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+.cand-kcal { font-size: 12px; color: var(--text-sub); }
+.cand-note { font-size: 11px; color: var(--text-hint); margin-top: 2px; }
+.mbadge { font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 500; float: right; }
+.ai-hint { font-size: 12px; color: var(--text-hint); margin-top: 6px; min-height: 16px; }
+.fab { position: fixed; bottom: 24px; right: 24px; width: 52px; height: 52px; border-radius: 50%; background: var(--green); color: white; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 50; }
+.fab:hover { opacity: 0.9; }
+@media (min-width: 769px) { .fab { display: none; } }
+.add-food-btn { display: flex; align-items: center; gap: 6px; background: var(--green); color: white; border: none; border-radius: var(--radius-sm); padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer; }
+.add-food-btn:hover { opacity: 0.9; }
+.btn-secondary { display: flex; align-items: center; gap: 4px; background: none; color: var(--text-sub); border: 0.5px solid var(--border-md); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px; cursor: pointer; }
+.btn-secondary:hover { background: var(--bg); color: var(--text); }
+.section-actions { display: flex; gap: 8px; align-items: center; }
+.move-info { background: var(--bg); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.5; }
+.move-info strong { color: var(--text); }
+.ai-info { background: var(--info-bg); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; color: var(--info); margin-bottom: 12px; }
+
+/* Calendar */
+.cal-section { margin-top: 32px; padding-top: 24px; border-top: 0.5px solid var(--border); }
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.cal-month { font-size: 16px; font-weight: 600; color: var(--text); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-dow { font-size: 11px; color: var(--text-hint); text-align: center; padding: 4px 0; font-weight: 500; }
+.cal-dow:first-child { color: #E24B4A; }
+.cal-dow:last-child { color: #378ADD; }
+.cal-cell { border-radius: var(--radius-sm); padding: 6px 4px 8px; min-height: 64px; cursor: pointer; border: 0.5px solid transparent; transition: border-color 0.1s, background 0.1s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.cal-cell:hover { background: var(--bg); border-color: var(--border); }
+.cal-cell.today { border-color: var(--green); }
+.cal-cell.selected { background: var(--success-bg); border-color: var(--green); }
+.cal-cell.empty { cursor: default; pointer-events: none; }
+.cal-day { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1; }
+.cal-cell.today .cal-day { color: var(--green); font-weight: 700; }
+.cal-cell .sun .cal-day { color: #E24B4A; }
+.cal-cell.other-month .cal-day { color: var(--text-hint); }
+.cal-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.cal-pct { font-size: 10px; color: var(--text-sub); line-height: 1; }
+.cal-legend { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.cal-legend-item { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-sub); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* API key */
+.api-key-box { background: var(--bg); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 12px; border: 0.5px solid var(--border); }
+.api-key-toggle { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.api-key-title { font-size: 12px; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.api-key-status { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+.api-key-status.set { background: var(--success-bg); color: var(--success); }
+.api-key-status.unset { background: var(--warn-bg); color: var(--warn); }
+.api-key-body { margin-top: 10px; display: none; }
+.api-key-body.open { display: block; }
+.api-key-help { font-size: 11px; color: var(--text-sub); margin-top: 6px; line-height: 1.5; }
+.api-key-help a { color: var(--info); text-decoration: none; }
+.api-key-row { display: flex; gap: 6px; margin-top: 6px; }
+.api-key-row input { flex: 1; font-family: monospace; font-size: 12px; }
+.btn-small { padding: 6px 10px; font-size: 12px; background: var(--green); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; }
+.btn-small.danger { background: var(--danger); }
+.btn-small:hover { opacity: 0.9; }
+
+/* Cloud sync */
+.sync-section { margin-top: 16px; padding-top: 16px; border-top: 0.5px solid var(--border); }
+.sync-status-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: var(--bg); border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; }
+.sync-status-row:hover { background: var(--surface); border: 0.5px solid var(--border); }
+.sync-status-text { display: flex; align-items: center; gap: 6px; color: var(--text-sub); }
+.sync-status-text.active { color: var(--success); }
+.sync-status-text.error { color: var(--danger); }
+.sync-status-text.busy { color: var(--info); }
+.sync-status-text i { font-size: 14px; }
+.sync-link { font-size: 11px; color: var(--info); }
+.code-block { background: var(--bg); border-radius: var(--radius-sm); padding: 10px; font-family: monospace; font-size: 11px; color: var(--text); white-space: pre-wrap; word-break: break-all; line-height: 1.5; max-height: 140px; overflow-y: auto; }
+.step-num { display: inline-block; width: 18px; height: 18px; line-height: 18px; text-align: center; background: var(--green); color: white; border-radius: 50%; font-size: 11px; font-weight: 500; margin-right: 6px; }
+.step-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; }
+.family-code-display { background: var(--success-bg); color: var(--success); font-family: monospace; font-size: 14px; font-weight: 500; padding: 8px 12px; border-radius: var(--radius-sm); text-align: center; margin: 8px 0; }
+
+/* Social */
+.public-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--bg); border-radius: var(--radius-sm); margin-bottom: 12px; }
+.public-toggle-label { font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.public-toggle-hint { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+.switch { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; inset: 0; background: var(--border-md); border-radius: 20px; transition: 0.2s; }
+.slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+.switch input:checked + .slider { background: var(--green); }
+.switch input:checked + .slider:before { transform: translateX(16px); }
+
+.discover-btn { display: flex; align-items: center; gap: 6px; background: none; color: var(--text-sub); border: 0.5px solid var(--border-md); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px; cursor: pointer; }
+.discover-btn:hover { background: var(--bg); color: var(--text); }
+
+.viewing-banner { background: var(--info-bg); color: var(--info); padding: 10px 14px; border-radius: var(--radius); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+.viewing-banner button { background: var(--info); color: white; border: none; padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; font-weight: 500; }
+.viewing-banner button:hover { opacity: 0.9; }
+
+body.viewing-mode .add-food-btn,
+body.viewing-mode #move-btn,
+body.viewing-mode .fab,
+body.viewing-mode .del-btn { display: none !important; }
+
+.discover-tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 0.5px solid var(--border); padding-bottom: 8px; }
+.tab-btn { background: none; border: none; padding: 6px 10px; font-size: 13px; color: var(--text-sub); cursor: pointer; border-radius: var(--radius-sm); }
+.tab-btn.active { background: var(--green); color: white; }
+
+.user-card-list { display: flex; flex-direction: column; gap: 8px; max-height: 50vh; overflow-y: auto; }
+.user-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-sm); }
+.user-card .ua { width: 36px; height: 36px; border-radius: 50%; background: var(--green); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+.user-card .info { flex: 1; min-width: 0; }
+.user-card .nm { font-size: 14px; font-weight: 500; color: var(--text); }
+.user-card .meta { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+.user-card-actions { display: flex; gap: 4px; }
+.icon-btn { background: none; border: 0.5px solid var(--border-md); width: 30px; height: 30px; border-radius: var(--radius-sm); cursor: pointer; color: var(--text-sub); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.icon-btn:hover { background: var(--surface); color: var(--text); }
+.icon-btn.followed { background: var(--green); color: white; border-color: var(--green); }
+.empty-list { text-align: center; padding: 32px 16px; color: var(--text-hint); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar: profile -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon"><i class="ti ti-salad"></i></div>
+      <div>
+        <div class="brand-name">스마트잇</div>
+        <div class="brand-sub">데일리 트래커</div>
+      </div>
+    </div>
+
+    <div class="user-selector">
+      <div class="user-selector-row">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div class="user-select-wrap">
+          <select id="user-select" onchange="onUserSelectChange()" style="width:100%"></select>
+        </div>
+        <button class="user-action-btn" onclick="addUser()" title="새 사용자 추가" aria-label="새 사용자 추가">
+          <i class="ti ti-user-plus"></i>
+        </button>
+        <button class="user-action-btn danger" id="user-delete-btn" onclick="deleteCurrentUser()" title="현재 사용자 삭제" aria-label="현재 사용자 삭제" style="display:none">
+          <i class="ti ti-trash"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">닉네임</div>
+      <input type="text" id="nickname" placeholder="이름을 입력하세요" oninput="saveCurrentUser()">
+    </div>
+    <div class="form-group">
+      <div class="form-label">나이</div>
+      <input type="number" id="age" value="30" min="10" max="99" oninput="saveCurrentUser()">
+    </div>
+    <div class="form-group">
+      <div class="form-label">성별</div>
+      <select id="sex" onchange="saveCurrentUser()">
+        <option value="m">남성</option>
+        <option value="f">여성</option>
+      </select>
+    </div>
+    <div class="form-row form-group">
+      <div>
+        <div class="form-label">키 (cm)</div>
+        <input type="number" id="height" value="170" min="100" max="220" oninput="saveCurrentUser()">
+      </div>
+      <div>
+        <div class="form-label">체중 (kg)</div>
+        <input type="number" id="weight" value="65" min="30" max="200" step="0.5" oninput="saveCurrentUser()">
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">활동량</div>
+      <select id="activity" onchange="saveCurrentUser()">
+        <option value="1.2">거의 없음</option>
+        <option value="1.375">약간 있음</option>
+        <option value="1.55" selected>보통</option>
+        <option value="1.725">많음</option>
+        <option value="1.9">매우 많음</option>
+      </select>
+    </div>
+    <div class="tdee-display">
+      <div class="val" id="tdee-display">2,317</div>
+      <div class="lbl">하루 권장 칼로리 (kcal)</div>
+    </div>
+
+    <div class="public-toggle">
+      <div>
+        <div class="public-toggle-label">
+          <i class="ti ti-world"></i> 공개 프로필
+        </div>
+        <div class="public-toggle-hint">모든 기록이 자동 공유돼요</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="public-toggle" onchange="togglePublic()">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="sync-section">
+      <div class="sync-status-row" onclick="openSync()">
+        <span class="sync-status-text" id="sync-status-text">
+          <i class="ti ti-cloud-off"></i> 로컬 전용
+        </span>
+        <span class="sync-link">설정 →</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Viewing banner (shown when viewing another user) -->
+    <div class="viewing-banner" id="viewing-banner" style="display:none">
+      <span><i class="ti ti-eye"></i> <strong id="viewing-name"></strong>님의 기록을 보고 있어요</span>
+      <button onclick="backToMine()">내 기록으로 ←</button>
+    </div>
+
+    <!-- Date nav -->
+    <div class="date-nav">
+      <button class="nav-btn" onclick="changeDay(-1)" aria-label="이전 날">
+        <i class="ti ti-chevron-left"></i>
+      </button>
+      <div class="date-nav-center">
+        <div class="date-main" id="date-main"></div>
+        <div class="date-sub" id="date-sub"></div>
+      </div>
+      <button class="nav-btn" onclick="changeDay(1)" aria-label="다음 날">
+        <i class="ti ti-chevron-right"></i>
+      </button>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <button class="discover-btn" onclick="openDiscover()" style="width:100%;justify-content:center">
+        <i class="ti ti-users"></i> 친구 찾기 / 둘러보기
+      </button>
+    </div>
+
+    <!-- Ring summary -->
+    <div class="summary-card">
+      <div class="ring-wrap">
+        <svg width="110" height="110" viewBox="0 0 110 110">
+          <circle cx="55" cy="55" r="46" fill="none" stroke="var(--border)" stroke-width="10"/>
+          <circle cx="55" cy="55" r="46" fill="none" id="ring-arc"
+            stroke="var(--green)" stroke-width="10" stroke-linecap="round"
+            stroke-dasharray="0 289" style="transition:stroke-dasharray 0.5s,stroke 0.5s"/>
+        </svg>
+        <div class="ring-center">
+          <span class="ring-pct" id="ring-pct">0%</span>
+          <span class="ring-lbl">달성률</span>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div>
+          <div class="stat-row">
+            <span class="stat-name">섭취 칼로리</span>
+            <span><span class="stat-val" id="s-eaten">0</span><span class="stat-unit"> kcal</span></span>
+          </div>
+          <div class="mini-bar"><div class="mini-fill" id="bar-fill" style="width:0%;background:var(--green)"></div></div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-name">목표 칼로리</span>
+          <span><span class="stat-val" id="s-tdee">2,317</span><span class="stat-unit"> kcal</span></span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-name">남은 칼로리</span>
+          <span><span class="stat-val" id="s-remain">2,317</span><span class="stat-unit"> kcal</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meals -->
+    <div class="section-header">
+      <span class="section-title">오늘의 식사</span>
+      <div class="section-actions">
+        <button class="btn-secondary" onclick="openMoveDate()" id="move-btn" style="display:none">
+          <i class="ti ti-calendar-share"></i> 날짜 수정
+        </button>
+        <button class="add-food-btn" onclick="openSheet()">
+          <i class="ti ti-plus"></i> 식사 추가
+        </button>
+      </div>
+    </div>
+
+    <div id="meals-list"></div>
+    <div id="empty-msg" class="empty-day" style="display:none">
+      <i class="ti ti-bowl-spoon"></i>
+      아직 기록된 식사가 없어요<br>
+      <span style="font-size:13px">식사 추가 버튼으로 시작해보세요</span>
+    </div>
+
+    <!-- Calendar -->
+    <div class="cal-section">
+      <div class="cal-nav">
+        <button class="nav-btn" onclick="changeCalMonth(-1)" aria-label="이전 달"><i class="ti ti-chevron-left"></i></button>
+        <span class="cal-month" id="cal-month-label"></span>
+        <button class="nav-btn" onclick="changeCalMonth(1)" aria-label="다음 달"><i class="ti ti-chevron-right"></i></button>
+      </div>
+      <div class="cal-grid" id="cal-grid">
+        <div class="cal-dow">일</div>
+        <div class="cal-dow">월</div>
+        <div class="cal-dow">화</div>
+        <div class="cal-dow">수</div>
+        <div class="cal-dow">목</div>
+        <div class="cal-dow">금</div>
+        <div class="cal-dow">토</div>
+      </div>
+      <div class="cal-legend">
+        <div class="cal-legend-item"><div class="legend-dot" style="background:#1D9E75"></div> 70% 이하</div>
+        <div class="cal-legend-item"><div class="legend-dot" style="background:#BA7517"></div> 70~120%</div>
+        <div class="cal-legend-item"><div class="legend-dot" style="background:#E24B4A"></div> 120% 초과</div>
+        <div class="cal-legend-item"><div class="legend-dot" style="background:var(--border-md)"></div> 기록 없음</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- FAB (mobile) -->
+<button class="fab" onclick="openSheet()" aria-label="식사 추가">
+  <i class="ti ti-plus"></i>
+</button>
+
+<!-- Sheet / Modal -->
+<div class="overlay" id="overlay" onclick="maybeClose(event)">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <p class="sheet-title">식사 추가</p>
+
+    <div class="seg-ctrl" id="meal-seg">
+      <button class="seg-btn active" onclick="setMeal(this,'아침')">아침</button>
+      <button class="seg-btn" onclick="setMeal(this,'점심')">점심</button>
+      <button class="seg-btn" onclick="setMeal(this,'저녁')">저녁</button>
+      <button class="seg-btn" onclick="setMeal(this,'간식')">간식</button>
+    </div>
+
+    <div class="api-key-box" style="display:none">
+      <div class="api-key-toggle" onclick="toggleApiKey()">
+        <span class="api-key-title">
+          <i class="ti ti-key"></i> OpenAI API 키
+        </span>
+        <span class="api-key-status unset" id="api-key-status">설정 필요</span>
+      </div>
+      <div class="api-key-body" id="api-key-body">
+        <div class="api-key-row">
+          <input type="password" id="api-key-input" placeholder="sk-..." autocomplete="off">
+          <button class="btn-small" onclick="saveApiKey()">저장</button>
+          <button class="btn-small danger" id="api-key-clear" onclick="clearApiKey()" style="display:none">삭제</button>
+        </div>
+        <div class="api-key-help">
+          AI 검색은 OpenAI API를 사용해요. <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>에서 키를 발급받으세요.<br>
+          키는 브라우저에만 저장되며 외부로 전송되지 않아요.
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet-label">AI로 칼로리 검색</div>
+    <div style="display:flex;gap:8px;margin-bottom:4px">
+      <input type="text" id="ai-q" placeholder="예: 비빔밥 1인분, 아메리카노 한 잔" style="flex:1">
+      <button class="add-food-btn" onclick="askAI()" style="white-space:nowrap">검색</button>
+    </div>
+    <div class="ai-hint" id="ai-hint"></div>
+    <div class="cand-grid" id="cand-grid" style="display:none"></div>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span class="divider-text">또는 직접 입력</span>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="form-group">
+      <div class="sheet-label">음식 이름</div>
+      <input type="text" id="f-name" placeholder="음식 이름">
+    </div>
+    <div class="form-group">
+      <div class="sheet-label">칼로리 (kcal)</div>
+      <input type="number" id="f-kcal" placeholder="kcal" inputmode="numeric">
+    </div>
+    <button class="btn-primary" onclick="addFood()">추가하기</button>
+    <button class="btn-ghost" onclick="closeSheet()">취소</button>
+  </div>
+</div>
+
+<!-- Date move modal -->
+<div class="overlay" id="move-overlay" onclick="maybeCloseMove(event)">
+  <div class="sheet" id="move-sheet">
+    <div class="sheet-handle"></div>
+    <p class="sheet-title">날짜 옮기기</p>
+    <div class="move-info">
+      <strong id="move-source-label"></strong>의 식사 기록을<br>
+      다른 날짜로 옮겨요.
+    </div>
+    <div class="form-group">
+      <div class="sheet-label">옮길 날짜</div>
+      <input type="date" id="move-target-date">
+    </div>
+    <button class="btn-primary" onclick="moveMeals()">옮기기</button>
+    <button class="btn-ghost" onclick="closeMove()">취소</button>
+  </div>
+</div>
+
+<!-- Sync setup modal -->
+<div class="overlay" id="sync-overlay" onclick="maybeCloseSync(event)">
+  <div class="sheet" id="sync-sheet">
+    <div class="sheet-handle"></div>
+    <p class="sheet-title">원격 공유 설정</p>
+
+    <div class="move-info" style="margin-bottom:16px">
+      여러 기기에서 같은 데이터를 공유하려면 무료 Supabase 계정이 필요해요. 가족 모두가 같은 "가족 코드"를 입력하면 같은 데이터를 함께 봐요.
+    </div>
+
+    <div class="step-title"><span class="step-num">1</span> Supabase 계정 만들기</div>
+    <div class="form-group" style="font-size:12px;color:var(--text-sub);line-height:1.6">
+      <a href="https://supabase.com" target="_blank" style="color:var(--info)">supabase.com</a>에서 가입 후 새 프로젝트를 만드세요. (무료, 신용카드 불필요)
+    </div>
+
+    <div class="step-title"><span class="step-num">2</span> 데이터 테이블 만들기</div>
+    <div class="form-group" style="font-size:12px;color:var(--text-sub);margin-bottom:6px">
+      Supabase 대시보드 → SQL Editor → 아래 SQL 붙여넣고 실행:
+    </div>
+    <div class="code-block" id="sql-code">create table family_data (
+  family_id text primary key,
+  data jsonb not null,
+  updated_at timestamptz default now()
+);
+
+create table public_profiles (
+  device_id text primary key,
+  nickname text not null,
+  data jsonb not null,
+  updated_at timestamptz default now()
+);
+
+create table follows (
+  follower_id text,
+  followee_id text,
+  created_at timestamptz default now(),
+  primary key (follower_id, followee_id)
+);
+
+alter table family_data enable row level security;
+alter table public_profiles enable row level security;
+alter table follows enable row level security;
+
+create policy "Allow all" on family_data
+  for all using (true) with check (true);
+create policy "Allow all" on public_profiles
+  for all using (true) with check (true);
+create policy "Allow all" on follows
+  for all using (true) with check (true);</div>
+    <button class="btn-small" onclick="copySQL()" style="margin-top:6px"><i class="ti ti-copy"></i> SQL 복사</button>
+
+    <div class="step-title" style="margin-top:16px"><span class="step-num">3</span> API 정보 입력</div>
+    <div class="form-group" style="font-size:12px;color:var(--text-sub);margin-bottom:6px">
+      Supabase 대시보드 → Settings → API에서 복사:
+    </div>
+    <div class="form-group">
+      <div class="sheet-label">프로젝트 URL</div>
+      <input type="text" id="supa-url" placeholder="https://xxxxx.supabase.co">
+    </div>
+    <div class="form-group">
+      <div class="sheet-label">Anon (Public) Key</div>
+      <input type="password" id="supa-key" placeholder="eyJhbG...">
+    </div>
+
+    <div class="step-title" style="margin-top:8px"><span class="step-num">4</span> 가족 코드</div>
+    <div class="form-group" style="font-size:12px;color:var(--text-sub);margin-bottom:6px">
+      새로 만들면 다른 가족 구성원에게 공유하세요. 가족이 이미 사용 중이면 그 코드를 입력하세요.
+    </div>
+    <div class="form-group">
+      <div style="display:flex;gap:6px">
+        <input type="text" id="family-code" placeholder="예: happy-tiger-1234" style="flex:1">
+        <button class="btn-small" onclick="generateFamilyCode()">생성</button>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="saveSyncConfig()">연결하기</button>
+    <button class="btn-ghost" onclick="closeSync()">취소</button>
+    <button class="btn-ghost" id="disconnect-btn" onclick="disconnectSync()" style="display:none;color:var(--danger)">연결 해제</button>
+  </div>
+</div>
+
+<!-- Discover modal -->
+<div class="overlay" id="discover-overlay" onclick="maybeCloseDiscover(event)">
+  <div class="sheet" id="discover-sheet">
+    <div class="sheet-handle"></div>
+    <p class="sheet-title">친구 찾기</p>
+
+    <div class="discover-tabs">
+      <button class="tab-btn active" id="tab-all" onclick="switchDiscoverTab('all')">전체</button>
+      <button class="tab-btn" id="tab-following" onclick="switchDiscoverTab('following')">팔로잉</button>
+      <button class="tab-btn" onclick="refreshDiscover()" style="margin-left:auto">
+        <i class="ti ti-refresh"></i>
+      </button>
+    </div>
+
+    <div id="discover-status" style="font-size:12px;color:var(--text-hint);margin-bottom:8px"></div>
+    <div class="user-card-list" id="discover-list"></div>
+
+    <button class="btn-ghost" onclick="closeDiscover()" style="margin-top:12px">닫기</button>
+  </div>
+</div>
+
+<script>
+const MEALS = ['아침','점심','저녁','간식'];
+const MEAL_ICONS = {아침:'ti-sun',점심:'ti-bowl-spoon',저녁:'ti-moon',간식:'ti-apple'};
+const CAND_LABELS = [
+  {label:'가장 유사',bg:'#E1F5EE',col:'#085041'},
+  {label:'유사',bg:'#E6F1FB',col:'#0C447C'},
+  {label:'참고',bg:'#f3f4f6',col:'#6b7280'},
+  {label:'참고',bg:'#f3f4f6',col:'#6b7280'},
+];
+
+let today = new Date(); today.setHours(0,0,0,0);
+let cur = new Date(today);
+let selMeal = '아침';
+let selCand = null;
+let tdee = 2317;
+
+/* ── Multi-user state ── */
+let users = [];
+let currentUserId = null;
+let mealDB = {};  // { userId: { dateKey: { 아침:[], 점심:[], 저녁:[], 간식:[] } } }
+
+const STORAGE_USERS = 'smarteat_users';
+const STORAGE_CURRENT = 'smarteat_current_user';
+const STORAGE_MEALS = 'smarteat_meals';
+const STORAGE_SYNC = 'smarteat_sync_config';
+const STORAGE_PUBLIC = 'smarteat_public_users';
+const STORAGE_FOLLOWING = 'smarteat_following';
+
+let syncConfig = null;
+let pushTimer = null;
+
+let publicUsers = {};
+let following = [];
+let viewMode = 'mine';
+let viewedProfile = null;
+let discoverTab = 'all';
+
+function loadSyncConfig(){
+  try { syncConfig = JSON.parse(localStorage.getItem(STORAGE_SYNC) || 'null'); }
+  catch(e){ syncConfig = null; }
+}
+
+function isSyncActive(){
+  return syncConfig && syncConfig.supabaseUrl && syncConfig.anonKey && syncConfig.familyCode;
+}
+
+function setSyncStatus(state, msg){
+  const el = document.getElementById('sync-status-text');
+  if(!el) return;
+  const states = {
+    offline: { icon: 'ti-cloud-off', text: '로컬 전용', cls: '' },
+    idle: { icon: 'ti-cloud', text: syncConfig ? syncConfig.familyCode : '연결됨', cls: 'active' },
+    downloading: { icon: 'ti-cloud-download', text: '받는 중...', cls: 'busy' },
+    uploading: { icon: 'ti-cloud-upload', text: '저장 중...', cls: 'busy' },
+    synced: { icon: 'ti-cloud-check', text: '동기화됨', cls: 'active' },
+    error: { icon: 'ti-cloud-x', text: msg || '오류', cls: 'error' }
+  };
+  const s = states[state] || states.offline;
+  el.className = 'sync-status-text ' + s.cls;
+  el.innerHTML = `<i class="ti ${s.icon}"></i> ${s.text}`;
+}
+
+async function pullFromCloud(){
+  if(!isSyncActive()) return;
+  setSyncStatus('downloading');
+  try {
+    const url = `${syncConfig.supabaseUrl}/rest/v1/family_data?family_id=eq.${encodeURIComponent(syncConfig.familyCode)}&select=data`;
+    const res = await fetch(url, {
+      headers: {
+        'apikey': syncConfig.anonKey,
+        'Authorization': `Bearer ${syncConfig.anonKey}`
+      }
+    });
+    if(!res.ok){
+      const err = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}: ${err.slice(0,80)}`);
+    }
+    const rows = await res.json();
+    if(rows.length > 0 && rows[0].data){
+      const remote = rows[0].data;
+      if(remote.users && remote.users.length > 0){
+        users = remote.users;
+        mealDB = remote.meals || {};
+        persistUsersLocal();
+        persistMealsLocal();
+        if(!users.find(u => u.id === currentUserId)){
+          currentUserId = users[0].id;
+          localStorage.setItem(STORAGE_CURRENT, currentUserId);
+        }
+        loadUserToForm();
+      }
+    }
+    setSyncStatus('synced');
+    setTimeout(() => { if(isSyncActive()) setSyncStatus('idle'); }, 1500);
+  } catch(e){
+    setSyncStatus('error', e.message);
+  }
+}
+
+async function pushToCloud(){
+  if(!isSyncActive()) return;
+  setSyncStatus('uploading');
+  try {
+    const url = `${syncConfig.supabaseUrl}/rest/v1/family_data`;
+    const payload = {
+      family_id: syncConfig.familyCode,
+      data: { users, meals: mealDB },
+      updated_at: new Date().toISOString()
+    };
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'apikey': syncConfig.anonKey,
+        'Authorization': `Bearer ${syncConfig.anonKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok){
+      const err = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}: ${err.slice(0,80)}`);
+    }
+    setSyncStatus('synced');
+    setTimeout(() => { if(isSyncActive()) setSyncStatus('idle'); }, 1500);
+  } catch(e){
+    setSyncStatus('error', e.message);
+  }
+}
+
+function schedulePush(){
+  if(!isSyncActive()) return;
+  if(pushTimer) clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    pushToCloud();
+    if(isUserPublic(currentUserId)) pushPublicProfile(currentUserId);
+    pushTimer = null;
+  }, 1500);
+}
+
+/* ── Social ── */
+
+function loadSocialState(){
+  try { publicUsers = JSON.parse(localStorage.getItem(STORAGE_PUBLIC) || '{}'); }
+  catch(e){ publicUsers = {}; }
+  try { following = JSON.parse(localStorage.getItem(STORAGE_FOLLOWING) || '[]'); }
+  catch(e){ following = []; }
+}
+
+function isUserPublic(userId){
+  return !!publicUsers[userId];
+}
+
+function setUserPublic(userId, isPublic){
+  if(isPublic) publicUsers[userId] = true;
+  else delete publicUsers[userId];
+  localStorage.setItem(STORAGE_PUBLIC, JSON.stringify(publicUsers));
+}
+
+function refreshPublicToggle(){
+  document.getElementById('public-toggle').checked = isUserPublic(currentUserId);
+}
+
+async function togglePublic(){
+  if(!isSyncActive()){
+    alert('원격 공유 설정이 먼저 필요해요. 사이드바 하단의 "로컬 전용"을 눌러 Supabase를 설정해주세요.');
+    document.getElementById('public-toggle').checked = false;
+    return;
+  }
+
+  const checked = document.getElementById('public-toggle').checked;
+  if(checked){
+    if(!confirm('내 식사 기록이 모두 공개돼요. 다른 사용자가 내 닉네임과 모든 기록을 볼 수 있어요. 계속할까요?')){
+      document.getElementById('public-toggle').checked = false;
+      return;
+    }
+    setUserPublic(currentUserId, true);
+    await pushPublicProfile(currentUserId);
+  } else {
+    setUserPublic(currentUserId, false);
+    await deletePublicProfile(currentUserId);
+  }
+}
+
+async function pushPublicProfile(userId){
+  if(!isSyncActive() || !isUserPublic(userId)) return;
+  const u = users.find(x => x.id === userId);
+  if(!u) return;
+  try {
+    const payload = {
+      device_id: userId,
+      nickname: u.name,
+      data: { user: u, meals: mealDB[userId] || {} },
+      updated_at: new Date().toISOString()
+    };
+    await fetch(`${syncConfig.supabaseUrl}/rest/v1/public_profiles`, {
+      method: 'POST',
+      headers: {
+        'apikey': syncConfig.anonKey,
+        'Authorization': `Bearer ${syncConfig.anonKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify(payload)
+    });
+  } catch(e){
+    console.error('Public profile push failed', e);
+  }
+}
+
+async function deletePublicProfile(userId){
+  if(!isSyncActive()) return;
+  try {
+    await fetch(`${syncConfig.supabaseUrl}/rest/v1/public_profiles?device_id=eq.${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': syncConfig.anonKey,
+        'Authorization': `Bearer ${syncConfig.anonKey}`
+      }
+    });
+    await fetch(`${syncConfig.supabaseUrl}/rest/v1/follows?follower_id=eq.${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': syncConfig.anonKey,
+        'Authorization': `Bearer ${syncConfig.anonKey}`
+      }
+    });
+  } catch(e){
+    console.error('Public profile delete failed', e);
+  }
+}
+
+async function fetchPublicUsers(){
+  if(!isSyncActive()) return [];
+  try {
+    const res = await fetch(`${syncConfig.supabaseUrl}/rest/v1/public_profiles?select=device_id,nickname,data,updated_at&order=updated_at.desc&limit=50`, {
+      headers: {
+        'apikey': syncConfig.anonKey,
+        'Authorization': `Bearer ${syncConfig.anonKey}`
+      }
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch(e){
+    console.error('Fetch public users failed', e);
+    return [];
+  }
+}
+
+async function followUser(targetId){
+  if(!isSyncActive()) return;
+  if(!isUserPublic(currentUserId)){
+    alert('먼저 본인의 "공개 프로필"을 켜야 다른 사용자를 팔로우할 수 있어요.');
+    return;
+  }
+  try {
+    await fetch(`${syncConfig.supabaseUrl}/rest/v1/follows`, {
+      method: 'POST',
+      headers: {
+        'apikey': syncConfig.anonKey,
+        'Authorization': `Bearer ${syncConfig.anonKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        follower_id: currentUserId,
+        followee_id: targetId
+      })
+    });
+    if(!following.includes(targetId)){
+      following.push(targetId);
+      localStorage.setItem(STORAGE_FOLLOWING, JSON.stringify(following));
+    }
+  } catch(e){
+    console.error('Follow failed', e);
+  }
+}
+
+async function unfollowUser(targetId){
+  if(!isSyncActive()) return;
+  try {
+    await fetch(`${syncConfig.supabaseUrl}/rest/v1/follows?follower_id=eq.${encodeURIComponent(currentUserId)}&followee_id=eq.${encodeURIComponent(targetId)}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': syncConfig.anonKey,
+        'Authorization': `Bearer ${syncConfig.anonKey}`
+      }
+    });
+    following = following.filter(id => id !== targetId);
+    localStorage.setItem(STORAGE_FOLLOWING, JSON.stringify(following));
+  } catch(e){
+    console.error('Unfollow failed', e);
+  }
+}
+
+function openDiscover(){
+  if(!isSyncActive()){
+    alert('원격 공유 설정이 먼저 필요해요. 사이드바 하단의 "로컬 전용"을 눌러 Supabase를 설정해주세요.');
+    return;
+  }
+  document.getElementById('discover-overlay').classList.add('open');
+  refreshDiscover();
+}
+
+function closeDiscover(){ document.getElementById('discover-overlay').classList.remove('open'); }
+function maybeCloseDiscover(e){ if(e.target === document.getElementById('discover-overlay')) closeDiscover(); }
+
+function switchDiscoverTab(tab){
+  discoverTab = tab;
+  document.getElementById('tab-all').classList.toggle('active', tab === 'all');
+  document.getElementById('tab-following').classList.toggle('active', tab === 'following');
+  renderDiscoverList();
+}
+
+let discoverCache = [];
+
+async function refreshDiscover(){
+  const status = document.getElementById('discover-status');
+  const list = document.getElementById('discover-list');
+  status.textContent = '불러오는 중...';
+  list.innerHTML = '';
+  discoverCache = await fetchPublicUsers();
+  status.textContent = `${discoverCache.length}명의 공개 사용자`;
+  renderDiscoverList();
+}
+
+function renderDiscoverList(){
+  const list = document.getElementById('discover-list');
+  let items = discoverCache.filter(u => u.device_id !== currentUserId);
+  if(discoverTab === 'following'){
+    items = items.filter(u => following.includes(u.device_id));
+  }
+  if(items.length === 0){
+    list.innerHTML = `<div class="empty-list">${discoverTab === 'following' ? '아직 팔로우 중인 사람이 없어요' : '공개 사용자가 없어요'}</div>`;
+    return;
+  }
+  list.innerHTML = items.map(u => {
+    const initial = (u.nickname || '?').charAt(0).toUpperCase();
+    const isFollowed = following.includes(u.device_id);
+    const meals = (u.data && u.data.meals && u.data.meals[key(new Date(today))]) || null;
+    let todayKcal = 0;
+    if(meals){
+      MEALS.forEach(m => { (meals[m]||[]).forEach(f => { todayKcal += f.kcal; }); });
+    }
+    const updatedDate = new Date(u.updated_at);
+    const daysAgo = Math.floor((Date.now() - updatedDate.getTime()) / 86400000);
+    const timeStr = daysAgo === 0 ? '오늘' : daysAgo === 1 ? '어제' : `${daysAgo}일 전`;
+    return `<div class="user-card">
+      <div class="ua">${initial}</div>
+      <div class="info">
+        <div class="nm">${u.nickname}</div>
+        <div class="meta">오늘 ${todayKcal.toLocaleString()} kcal · 업데이트 ${timeStr}</div>
+      </div>
+      <div class="user-card-actions">
+        <button class="icon-btn ${isFollowed ? 'followed' : ''}" onclick="toggleFollow('${u.device_id}')" aria-label="${isFollowed ? '언팔로우' : '팔로우'}" title="${isFollowed ? '언팔로우' : '팔로우'}">
+          <i class="ti ${isFollowed ? 'ti-user-check' : 'ti-user-plus'}"></i>
+        </button>
+        <button class="icon-btn" onclick="viewUser('${u.device_id}')" aria-label="기록 보기" title="기록 보기">
+          <i class="ti ti-eye"></i>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleFollow(targetId){
+  if(following.includes(targetId)){
+    await unfollowUser(targetId);
+  } else {
+    await followUser(targetId);
+  }
+  renderDiscoverList();
+}
+
+function viewUser(targetId){
+  const profile = discoverCache.find(u => u.device_id === targetId);
+  if(!profile){ alert('프로필을 찾을 수 없어요.'); return; }
+  viewMode = 'viewing';
+  viewedProfile = profile;
+  document.body.classList.add('viewing-mode');
+  document.getElementById('viewing-banner').style.display = 'flex';
+  document.getElementById('viewing-name').textContent = profile.nickname;
+  closeDiscover();
+  calcBMR();
+  renderAll();
+}
+
+function backToMine(){
+  viewMode = 'mine';
+  viewedProfile = null;
+  document.body.classList.remove('viewing-mode');
+  document.getElementById('viewing-banner').style.display = 'none';
+  calcBMR();
+  renderAll();
+}
+
+function key(d){ return d.toISOString().slice(0,10); }
+
+function loadState(){
+  try { users = JSON.parse(localStorage.getItem(STORAGE_USERS) || '[]'); } catch(e){ users = []; }
+  try { mealDB = JSON.parse(localStorage.getItem(STORAGE_MEALS) || '{}'); } catch(e){ mealDB = {}; }
+  currentUserId = localStorage.getItem(STORAGE_CURRENT);
+
+  if(users.length === 0){
+    const defaultUser = {
+      id: 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8),
+      name: '사용자 1',
+      age: 30, sex: 'm', height: 170, weight: 65, activity: 1.55
+    };
+    users.push(defaultUser);
+    currentUserId = defaultUser.id;
+    persistUsers();
+    persistCurrent();
+  }
+
+  if(!users.find(u => u.id === currentUserId)){
+    currentUserId = users[0].id;
+    persistCurrent();
+  }
+
+  if(!mealDB[currentUserId]){
+    mealDB[currentUserId] = { [key(cur)]: { 아침:[], 점심:[], 저녁:[], 간식:[] } };
+    mealDB[currentUserId][key(cur)]['점심'].push({name:'돈코츠 라멘 (일반)', kcal:550});
+    mealDB[currentUserId][key(cur)]['저녁'].push({name:'참치 포케 (샐러드볼)', kcal:350});
+    persistMeals();
+  }
+}
+
+function persistUsersLocal(){ localStorage.setItem(STORAGE_USERS, JSON.stringify(users)); }
+function persistCurrentLocal(){ localStorage.setItem(STORAGE_CURRENT, currentUserId); }
+function persistMealsLocal(){ localStorage.setItem(STORAGE_MEALS, JSON.stringify(mealDB)); }
+
+function persistUsers(){ persistUsersLocal(); schedulePush(); }
+function persistCurrent(){ persistCurrentLocal(); }
+function persistMeals(){ persistMealsLocal(); schedulePush(); }
+
+function getCurrentUser(){
+  return users.find(u => u.id === currentUserId);
+}
+
+function getDay(d){
+  if(viewMode === 'viewing' && viewedProfile){
+    const k = key(d);
+    return (viewedProfile.data.meals && viewedProfile.data.meals[k]) || {아침:[],점심:[],저녁:[],간식:[]};
+  }
+  if(!mealDB[currentUserId]) mealDB[currentUserId] = {};
+  const k = key(d);
+  if(!mealDB[currentUserId][k]) mealDB[currentUserId][k] = {아침:[],점심:[],저녁:[],간식:[]};
+  return mealDB[currentUserId][k];
+}
+
+function diffDays(d){ return Math.round((d-today)/86400000); }
+
+function dateLabel(d){
+  const diff=diffDays(d);
+  const days=['일','월','화','수','목','금','토'];
+  const str=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+  return { main: str, sub: diff===0?'오늘':diff===-1?'어제':diff===1?'내일':'' };
+}
+
+function loadUserToForm(){
+  const u = getCurrentUser();
+  if(!u) return;
+  document.getElementById('nickname').value = u.name;
+  document.getElementById('age').value = u.age;
+  document.getElementById('sex').value = u.sex;
+  document.getElementById('height').value = u.height;
+  document.getElementById('weight').value = u.weight;
+  document.getElementById('activity').value = u.activity;
+  refreshAvatar();
+  refreshUserSelect();
+  refreshPublicToggle();
+  calcBMR();
+}
+
+function refreshAvatar(){
+  const u = getCurrentUser();
+  if(!u) return;
+  const initial = (u.name || '?').trim().charAt(0).toUpperCase() || '?';
+  document.getElementById('user-avatar').textContent = initial;
+}
+
+function refreshUserSelect(){
+  const sel = document.getElementById('user-select');
+  sel.innerHTML = users.map(u => `<option value="${u.id}" ${u.id===currentUserId?'selected':''}>${u.name}</option>`).join('');
+  document.getElementById('user-delete-btn').style.display = users.length > 1 ? 'flex' : 'none';
+}
+
+function onUserSelectChange(){
+  const newId = document.getElementById('user-select').value;
+  if(newId === currentUserId) return;
+  currentUserId = newId;
+  persistCurrent();
+  loadUserToForm();
+  renderAll();
+}
+
+function addUser(){
+  const name = prompt('새 사용자의 닉네임을 입력하세요:', `사용자 ${users.length + 1}`);
+  if(!name || !name.trim()) return;
+  const newUser = {
+    id: 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8),
+    name: name.trim(),
+    age: 30, sex: 'm', height: 170, weight: 65, activity: 1.55
+  };
+  users.push(newUser);
+  currentUserId = newUser.id;
+  mealDB[newUser.id] = {};
+  persistUsers();
+  persistCurrent();
+  persistMeals();
+  loadUserToForm();
+  renderAll();
+}
+
+function deleteCurrentUser(){
+  if(users.length <= 1){
+    alert('최소 1명의 사용자는 있어야 해요.');
+    return;
+  }
+  const u = getCurrentUser();
+  if(!confirm(`"${u.name}" 사용자와 모든 식사 기록을 삭제할까요?\n이 작업은 되돌릴 수 없어요.`)) return;
+  delete mealDB[currentUserId];
+  users = users.filter(x => x.id !== currentUserId);
+  currentUserId = users[0].id;
+  persistUsers();
+  persistCurrent();
+  persistMeals();
+  loadUserToForm();
+  renderAll();
+}
+
+function saveCurrentUser(){
+  const u = getCurrentUser();
+  if(!u) return;
+  u.name = document.getElementById('nickname').value.trim() || u.name;
+  u.age = parseInt(document.getElementById('age').value) || 30;
+  u.sex = document.getElementById('sex').value;
+  u.height = parseFloat(document.getElementById('height').value) || 170;
+  u.weight = parseFloat(document.getElementById('weight').value) || 65;
+  u.activity = parseFloat(document.getElementById('activity').value);
+  persistUsers();
+  refreshAvatar();
+  refreshUserSelect();
+  calcBMR();
+}
+
+function calcBMR(){
+  let u;
+  if(viewMode === 'viewing' && viewedProfile){
+    u = viewedProfile.data.user;
+  } else {
+    u = getCurrentUser();
+  }
+  if(!u){ tdee = 2317; return; }
+  let bmr = u.sex === 'm'
+    ? 88.362 + 13.397 * u.weight + 4.799 * u.height - 5.677 * u.age
+    : 447.593 + 9.247 * u.weight + 3.098 * u.height - 4.330 * u.age;
+  tdee = Math.round(bmr * u.activity);
+  document.getElementById('tdee-display').textContent = tdee.toLocaleString();
+  renderAll();
+}
+
+function totalKcal(d){
+  if(viewMode === 'viewing' && viewedProfile){
+    const day = (viewedProfile.data.meals || {})[key(d)];
+    if(!day) return 0;
+    return MEALS.reduce((s,m) => s + (day[m]||[]).reduce((a,f) => a+f.kcal, 0), 0);
+  }
+  if(!mealDB[currentUserId]) return 0;
+  const k = key(d);
+  const day = mealDB[currentUserId][k];
+  if(!day) return 0;
+  return MEALS.reduce((s,m) => s + (day[m]||[]).reduce((a,f) => a+f.kcal, 0), 0);
+}
+
+function renderAll(){
+  const dl=dateLabel(cur);
+  document.getElementById('date-main').textContent=dl.main;
+  document.getElementById('date-sub').textContent=dl.sub;
+
+  const eaten=totalKcal(cur);
+  const remain=tdee-eaten;
+  const pct=Math.min(Math.round((eaten/tdee)*100),100);
+  const circ=2*Math.PI*46;
+  const filled=(pct/100)*circ;
+
+  document.getElementById('ring-pct').textContent=pct+'%';
+  document.getElementById('s-eaten').textContent=eaten.toLocaleString();
+  document.getElementById('s-tdee').textContent=tdee.toLocaleString();
+  document.getElementById('s-remain').textContent=remain.toLocaleString();
+
+  const arc=document.getElementById('ring-arc');
+  arc.setAttribute('stroke-dasharray',`${filled.toFixed(1)} ${(circ-filled).toFixed(1)}`);
+  const col=pct>=100?'#E24B4A':pct>=70?'#1D9E75':'#378ADD';
+  arc.setAttribute('stroke',col);
+
+  const bf=document.getElementById('bar-fill');
+  bf.style.width=pct+'%';
+  bf.style.background=col;
+
+  const day=getDay(cur);
+  const hasFoods=MEALS.some(m=>day[m].length>0);
+  document.getElementById('empty-msg').style.display=hasFoods?'none':'block';
+  document.getElementById('move-btn').style.display=hasFoods?'flex':'none';
+
+  document.getElementById('meals-list').innerHTML=MEALS.map(meal=>{
+    const items=day[meal];
+    if(!items.length)return '';
+    const tot=items.reduce((s,f)=>s+f.kcal,0);
+    return `<div class="meal-card">
+      <div class="meal-header">
+        <div class="meal-left">
+          <div class="meal-icon"><i class="ti ${MEAL_ICONS[meal]}"></i></div>
+          <span class="meal-name">${meal}</span>
+        </div>
+        <span class="meal-kcal">${tot.toLocaleString()} kcal</span>
+      </div>
+      ${items.map((f,i)=>`<div class="food-item">
+        <span class="food-name">${f.name}</span>
+        <span class="food-kcal">${f.kcal.toLocaleString()} kcal</span>
+        <button class="del-btn" onclick="removeFood('${meal}',${i})" aria-label="삭제"><i class="ti ti-x"></i></button>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+
+  renderCalendar();
+}
+
+function changeDay(n){ cur=new Date(cur); cur.setDate(cur.getDate()+n); renderAll(); }
+function removeFood(meal,i){ getDay(cur)[meal].splice(i,1); persistMeals(); renderAll(); }
+
+function openMoveDate(){
+  document.getElementById('move-source-label').textContent = dateLabel(cur).main;
+  document.getElementById('move-target-date').value = key(cur);
+  document.getElementById('move-overlay').classList.add('open');
+}
+
+function closeMove(){
+  document.getElementById('move-overlay').classList.remove('open');
+}
+
+function maybeCloseMove(e){
+  if(e.target === document.getElementById('move-overlay')) closeMove();
+}
+
+function moveMeals(){
+  const targetStr = document.getElementById('move-target-date').value;
+  if(!targetStr){
+    alert('날짜를 선택해주세요.');
+    return;
+  }
+  const target = new Date(targetStr + 'T00:00:00');
+  target.setHours(0, 0, 0, 0);
+
+  if(key(target) === key(cur)){
+    closeMove();
+    return;
+  }
+
+  const sourceDay = getDay(cur);
+  const targetDay = getDay(target);
+  const targetHasFoods = MEALS.some(m => targetDay[m].length > 0);
+
+  if(targetHasFoods){
+    const targetLabel = dateLabel(target).main;
+    if(!confirm(`${targetLabel}에 이미 식사 기록이 있어요. 기존 기록에 합칠까요?`)){
+      return;
+    }
+  }
+
+  MEALS.forEach(m => {
+    targetDay[m] = targetDay[m].concat(sourceDay[m]);
+    sourceDay[m] = [];
+  });
+
+  persistMeals();
+  cur = new Date(target);
+  calYear = cur.getFullYear();
+  calMonth = cur.getMonth();
+  closeMove();
+  renderAll();
+}
+
+function openSheet(){
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('ai-q').value='';
+  document.getElementById('f-name').value='';
+  document.getElementById('f-kcal').value='';
+  document.getElementById('ai-hint').textContent='';
+  document.getElementById('ai-hint').style.color='var(--text-hint)';
+  document.getElementById('cand-grid').style.display='none';
+  refreshApiKeyStatus();
+  selCand=null;
+}
+function closeSheet(){ document.getElementById('overlay').classList.remove('open'); }
+function maybeClose(e){ if(e.target===document.getElementById('overlay'))closeSheet(); }
+
+function setMeal(btn,name){
+  selMeal=name;
+  document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function addFood(){
+  const name=selCand?selCand.name:document.getElementById('f-name').value.trim();
+  const kcal=selCand?selCand.kcal:parseInt(document.getElementById('f-kcal').value);
+  if(!name||!kcal||kcal<=0)return;
+  getDay(cur)[selMeal].push({name,kcal});
+  persistMeals();
+  selCand=null;
+  closeSheet();
+  renderAll();
+}
+
+function toggleApiKey(){
+  document.getElementById('api-key-body').classList.toggle('open');
+}
+
+function refreshApiKeyStatus(){
+  const key = localStorage.getItem('openai_api_key');
+  const status = document.getElementById('api-key-status');
+  const clearBtn = document.getElementById('api-key-clear');
+  if(key){
+    status.textContent = '설정 완료';
+    status.className = 'api-key-status set';
+    clearBtn.style.display = 'inline-block';
+    document.getElementById('api-key-input').value = '';
+    document.getElementById('api-key-input').placeholder = '••••••••••••••••';
+  } else {
+    status.textContent = '설정 필요';
+    status.className = 'api-key-status unset';
+    clearBtn.style.display = 'none';
+    document.getElementById('api-key-input').placeholder = 'sk-...';
+  }
+}
+
+function saveApiKey(){
+  const input = document.getElementById('api-key-input');
+  const val = input.value.trim();
+  if(!val){
+    alert('API 키를 입력해주세요.');
+    return;
+  }
+  if(!val.startsWith('sk-')){
+    if(!confirm('OpenAI API 키는 보통 "sk-"로 시작해요. 계속할까요?')) return;
+  }
+  localStorage.setItem('openai_api_key', val);
+  refreshApiKeyStatus();
+  document.getElementById('api-key-body').classList.remove('open');
+  document.getElementById('ai-hint').textContent = 'API 키가 저장됐어요. 이제 검색할 수 있어요.';
+  document.getElementById('ai-hint').style.color = 'var(--success)';
+}
+
+function clearApiKey(){
+  if(!confirm('저장된 API 키를 삭제할까요?')) return;
+  localStorage.removeItem('openai_api_key');
+  refreshApiKeyStatus();
+}
+
+async function askAI(){
+  const q = document.getElementById('ai-q').value.trim();
+  if(!q) return;
+
+  const hint = document.getElementById('ai-hint');
+
+  if(!isSyncActive()){
+    hint.textContent = '먼저 사이드바 하단에서 Supabase 연결을 설정해주세요.';
+    hint.style.color = 'var(--danger)';
+    return;
+  }
+
+  const btn = document.querySelector('button[onclick="askAI()"]');
+  btn.disabled = true;
+  hint.style.color = 'var(--text-hint)';
+  hint.textContent = 'AI가 검색 중...';
+  document.getElementById('cand-grid').style.display = 'none';
+  selCand = null;
+
+  try {
+    const res = await fetch(`${syncConfig.supabaseUrl}/functions/v1/calorie-search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${syncConfig.anonKey}`
+      },
+      body: JSON.stringify({ query: q })
+    });
+
+    if(!res.ok){
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const candidates = data.candidates || (Array.isArray(data) ? data : []);
+
+    if(!candidates.length){
+      throw new Error('검색 결과를 받지 못했어요');
+    }
+
+    hint.style.color = 'var(--text-sub)';
+    hint.textContent = `"${q}" 검색 결과 — 아래에서 선택하세요`;
+    showCandidates(candidates);
+  } catch(e){
+    hint.style.color = 'var(--danger)';
+    hint.textContent = '검색 실패: ' + (e.message || '알 수 없는 오류');
+  }
+  btn.disabled = false;
+}
+
+function showCandidates(candidates){
+  selCand = null;
+  const grid = document.getElementById('cand-grid');
+  grid.style.display = 'grid';
+  grid.innerHTML = candidates.slice(0,4).map((c,i) => {
+    const lb = CAND_LABELS[i] || CAND_LABELS[2];
+    return `<div class="cand-card" id="cc${i}" onclick="pickCand(${i},'${c.name.replace(/'/g,"\\'")}',${c.kcal})">
+      <span class="mbadge" style="background:${lb.bg};color:${lb.col}">${lb.label}</span>
+      <div class="cand-name">${c.name}</div>
+      <div class="cand-kcal">${c.kcal.toLocaleString()} kcal</div>
+      <div class="cand-note">${c.note||''}</div>
+    </div>`;
+  }).join('');
+}
+
+window.showCandidates = showCandidates;
+
+function pickCand(i,name,kcal){
+  selCand={name,kcal};
+  document.querySelectorAll('.cand-card').forEach((el,idx)=>el.classList.toggle('sel',idx===i));
+  document.getElementById('f-name').value=name;
+  document.getElementById('f-kcal').value=kcal;
+}
+
+document.getElementById('f-kcal').addEventListener('keydown',e=>{if(e.key==='Enter')addFood();});
+document.getElementById('ai-q').addEventListener('keydown',e=>{if(e.key==='Enter')askAI();});
+
+function openSync(){
+  loadSyncConfig();
+  if(syncConfig){
+    document.getElementById('supa-url').value = syncConfig.supabaseUrl || '';
+    document.getElementById('supa-key').value = syncConfig.anonKey || '';
+    document.getElementById('family-code').value = syncConfig.familyCode || '';
+    document.getElementById('disconnect-btn').style.display = 'block';
+  } else {
+    document.getElementById('supa-url').value = '';
+    document.getElementById('supa-key').value = '';
+    document.getElementById('family-code').value = '';
+    document.getElementById('disconnect-btn').style.display = 'none';
+  }
+  document.getElementById('sync-overlay').classList.add('open');
+}
+
+function closeSync(){ document.getElementById('sync-overlay').classList.remove('open'); }
+function maybeCloseSync(e){ if(e.target === document.getElementById('sync-overlay')) closeSync(); }
+
+function generateFamilyCode(){
+  const adjs = ['happy','kind','brave','gentle','bright','wise','lucky','cozy','warm','sunny'];
+  const animals = ['tiger','panda','fox','koala','otter','whale','eagle','rabbit','dolphin','bear'];
+  const a = adjs[Math.floor(Math.random() * adjs.length)];
+  const b = animals[Math.floor(Math.random() * animals.length)];
+  const n = Math.floor(Math.random() * 9000 + 1000);
+  document.getElementById('family-code').value = `${a}-${b}-${n}`;
+}
+
+function copySQL(){
+  const text = document.getElementById('sql-code').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('SQL이 복사됐어요. Supabase SQL Editor에 붙여넣고 실행하세요.');
+  }).catch(() => {
+    alert('복사 실패. 직접 선택해서 복사해주세요.');
+  });
+}
+
+async function saveSyncConfig(){
+  const url = document.getElementById('supa-url').value.trim().replace(/\/$/, '');
+  const key = document.getElementById('supa-key').value.trim();
+  const code = document.getElementById('family-code').value.trim();
+
+  if(!url || !key || !code){
+    alert('모든 항목을 입력해주세요.');
+    return;
+  }
+  if(!url.startsWith('https://') || !url.includes('.supabase.co')){
+    alert('Supabase URL 형식이 올바르지 않아요. (예: https://xxxxx.supabase.co)');
+    return;
+  }
+
+  syncConfig = { supabaseUrl: url, anonKey: key, familyCode: code };
+  localStorage.setItem(STORAGE_SYNC, JSON.stringify(syncConfig));
+
+  setSyncStatus('downloading');
+  closeSync();
+
+  try {
+    const checkUrl = `${url}/rest/v1/family_data?family_id=eq.${encodeURIComponent(code)}&select=data`;
+    const res = await fetch(checkUrl, {
+      headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
+    });
+
+    if(!res.ok){
+      const err = await res.text().catch(() => '');
+      throw new Error(`연결 실패: ${err.slice(0,100)}`);
+    }
+
+    const rows = await res.json();
+    if(rows.length > 0 && rows[0].data && rows[0].data.users && rows[0].data.users.length > 0){
+      if(confirm(`"${code}" 가족 코드에 기존 데이터가 있어요. 클라우드 데이터로 현재 기기를 동기화할까요?\n\n(취소하면 현재 기기 데이터를 클라우드에 올려요)`)){
+        await pullFromCloud();
+        renderAll();
+      } else {
+        await pushToCloud();
+      }
+    } else {
+      await pushToCloud();
+    }
+  } catch(e){
+    setSyncStatus('error', e.message);
+    alert('연결 실패: ' + e.message);
+  }
+}
+
+function disconnectSync(){
+  if(!confirm('원격 공유를 해제할까요? (로컬 데이터는 유지돼요)')) return;
+  syncConfig = null;
+  localStorage.removeItem(STORAGE_SYNC);
+  setSyncStatus('offline');
+  closeSync();
+}
+
+/* ── Calendar ── */
+let calYear = today.getFullYear();
+let calMonth = today.getMonth();
+
+function dotColor(pct) {
+  if (pct <= 0) return null;
+  if (pct <= 70) return '#1D9E75';
+  if (pct <= 120) return '#BA7517';
+  return '#E24B4A';
+}
+
+function renderCalendar() {
+  const label = `${calYear}년 ${calMonth + 1}월`;
+  document.getElementById('cal-month-label').textContent = label;
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const prevDays = new Date(calYear, calMonth, 0).getDate();
+
+  const grid = document.getElementById('cal-grid');
+  const existing = grid.querySelectorAll('.cal-cell');
+  existing.forEach(el => el.remove());
+
+  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+
+  for (let i = 0; i < totalCells; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell';
+
+    let d, otherMonth = false;
+    if (i < firstDay) {
+      d = new Date(calYear, calMonth - 1, prevDays - firstDay + i + 1);
+      otherMonth = true;
+    } else if (i >= firstDay + daysInMonth) {
+      d = new Date(calYear, calMonth + 1, i - firstDay - daysInMonth + 1);
+      otherMonth = true;
+    } else {
+      d = new Date(calYear, calMonth, i - firstDay + 1);
+    }
+
+    if (otherMonth) cell.classList.add('other-month');
+
+    const isToday = key(d) === key(today);
+    const isSelected = key(d) === key(cur);
+    if (isToday) cell.classList.add('today');
+    if (isSelected) cell.classList.add('selected');
+
+    const dayEl = document.createElement('div');
+    dayEl.className = 'cal-day';
+    dayEl.textContent = d.getDate();
+    cell.appendChild(dayEl);
+
+    const eaten = totalKcal(d);
+    const rawPct = tdee > 0 ? Math.round((eaten / tdee) * 100) : 0;
+    const col = dotColor(rawPct);
+
+    const dot = document.createElement('div');
+    dot.className = 'cal-dot';
+    dot.style.background = col || 'var(--border-md)';
+    cell.appendChild(dot);
+
+    if (eaten > 0) {
+      const pctEl = document.createElement('div');
+      pctEl.className = 'cal-pct';
+      pctEl.textContent = rawPct + '%';
+      cell.appendChild(pctEl);
+    }
+
+    cell.addEventListener('click', () => {
+      cur = new Date(d);
+      if (otherMonth) {
+        calYear = cur.getFullYear();
+        calMonth = cur.getMonth();
+      }
+      renderAll();
+      renderCalendar();
+    });
+
+    grid.appendChild(cell);
+  }
+}
+
+function changeCalMonth(n) {
+  calMonth += n;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+loadState();
+loadSyncConfig();
+loadSocialState();
+loadUserToForm();
+if(isSyncActive()){
+  setSyncStatus('idle');
+  pullFromCloud();
+} else {
+  setSyncStatus('offline');
+}
+</script>
+</body>
+</html>
